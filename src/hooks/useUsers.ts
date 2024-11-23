@@ -1,69 +1,95 @@
 import { useState, useCallback } from 'react';
-import { User, UserFormData } from '@/types';
-import { api, isApiError } from '@/lib/api';
+import { api } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-export function useUsers() {
-  const [users, setUsers] = useState<User[]>([]);
+export function useUsers<T>() {
+  const [users, setUsers] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.users.getAll();
-      setUsers(data);
+      console.log('Fetching users...');
+      
+      const response = await api.get<{ users: T[]; message: string }>('/users');
+      console.log('API Response:', response.data);
+      
+      if (!response.data?.users) {
+        throw new Error('No users data received');
+      }
+      
+      setUsers(response.data.users);
       setError(null);
-    } catch (err:any) {
-      const errorMessage = isApiError(err) ? err.message : 'Failed to fetch users';
-      setError(errorMessage);
+      
+      toast({
+        title: "Success",
+        description: response.data.message || "Users fetched successfully",
+      });
+    } catch (err) {
+      console.error('Error in useUsers hook:', err);
+      const message = err instanceof Error ? err.message : 'Failed to fetch users';
+      setError(message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
-  const createUser = useCallback(async (userData: UserFormData) => {
+  const createUser = useCallback(async (userData: Omit<T, '_id' | 'createdAt' | 'updatedAt'>) => {
     try {
       setLoading(true);
-      const newUser = await api.users.create(userData);
-      setUsers(prev => [...prev, newUser]);
-      return newUser;
-    } catch (err:any) {
-      const errorMessage = isApiError(err) ? err.message : 'Failed to create user';
-      setError(errorMessage);
+      const { data } = await api.post<{ success: boolean; message: string; data: { user: T } }>('/users', userData);
+      
+      if (!data?.success) {
+        throw new Error(data?.message || 'Failed to create user');
+      }
+
+      setUsers(prev => [...prev, data.data.user]);
+      toast({
+        title: "Success",
+        description: data.message || "User created successfully",
+      });
+      return data.data.user;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create user';
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const updateUser = useCallback(async (id: string, userData: Partial<UserFormData>) => {
-    try {
-      setLoading(true);
-      const updatedUser = await api.users.update(id, userData);
-      setUsers(prev => prev.map(user => user.id === id ? updatedUser : user));
-      return updatedUser;
-    } catch (err:any) {
-      const errorMessage = isApiError(err) ? err.message : 'Failed to update user';
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  }, [toast]);
 
   const deleteUser = useCallback(async (id: string) => {
     try {
       setLoading(true);
-      await api.users.delete(id);
-      setUsers(prev => prev.filter(user => user.id !== id));
-    } catch (err:any) {
-      const errorMessage = isApiError(err) ? err.message : 'Failed to delete user';
-      setError(errorMessage);
+      const response = await api.delete(`/users/${id}`);
+      setUsers(prev => prev.filter(user => (user as any)._id !== id));
+      toast({
+        title: "Success",
+        description: response.data.message || "User deleted successfully",
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete user';
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: message,
+      });
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   return {
     users,
@@ -71,7 +97,6 @@ export function useUsers() {
     error,
     fetchUsers,
     createUser,
-    updateUser,
     deleteUser,
   };
 } 

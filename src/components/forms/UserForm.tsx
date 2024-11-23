@@ -1,9 +1,9 @@
 'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from 'react';
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,44 +13,66 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { User } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
-const userFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  roleId: z.string().min(1, "Please select a role"),
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  roleId: z.enum(["admin", "user"], {
+    required_error: "Role is required",
+  }),
   status: z.enum(["active", "inactive"]),
 });
 
-type UserFormValues = z.infer<typeof userFormSchema>;
+type FormData = z.infer<typeof formSchema>;
 
 interface UserFormProps {
-  initialData?: Partial<User>;
-  onSubmit: (data: UserFormValues) => void;
-  roles: { id: string; name: string; }[];
+  onSubmit: (data: FormData) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export function UserForm({ initialData, onSubmit, roles }: UserFormProps) {
-  const form = useForm<UserFormValues>({
-    resolver: zodResolver(userFormSchema),
+export function UserForm({ onSubmit, isLoading = false }: UserFormProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialData?.name || "",
-      email: initialData?.email || "",
-      roleId: initialData?.roleId || "",
-      status: initialData?.status || "active",
+      name: "",
+      email: "",
+      password: "",
+      roleId: "admin",
+      status: "active",
     },
   });
 
+  const handleSubmit = async (data: FormData) => {
+    try {
+      setIsSubmitting(true);
+      await onSubmit(data);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
@@ -58,7 +80,7 @@ export function UserForm({ initialData, onSubmit, roles }: UserFormProps) {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="Enter name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -72,7 +94,21 @@ export function UserForm({ initialData, onSubmit, roles }: UserFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="john@example.com" type="email" {...field} />
+                <Input type="email" placeholder="Enter email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="Enter password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -85,18 +121,15 @@ export function UserForm({ initialData, onSubmit, roles }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -126,7 +159,17 @@ export function UserForm({ initialData, onSubmit, roles }: UserFormProps) {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || isLoading}
+          >
+            {(isSubmitting || isLoading) && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            Save User
+          </Button>
+        </div>
       </form>
     </Form>
   );
