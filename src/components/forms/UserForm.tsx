@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,40 +17,57 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useRoles } from "@/hooks/useRoles";
+import { Role } from "@/app/roles/page";
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  roleId: z.enum(["admin", "user"], {
-    required_error: "Role is required",
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
   }),
-  status: z.enum(["active", "inactive"]),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  roleId: z.string().min(1, {
+    message: "Please select a role.",
+  }),
+  password: z.string().min(6, {
+    message: "Password must be at least 6 characters.",
+  }),
+  status: z.enum(['active', 'inactive']).default('active'),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>;
+
+const defaultValues: Partial<FormValues> = {
+  name: "",
+  email: "",
+  roleId: "", 
+  password: "",
+  status: "active",
+};
 
 interface UserFormProps {
-  onSubmit: (data: FormData) => Promise<void>;
+  onSubmit: (data: FormValues) => Promise<void>;
   isLoading?: boolean;
 }
 
 export function UserForm({ onSubmit, isLoading = false }: UserFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { roles, fetchRoles, loading: rolesLoading } = useRoles<Role>();
+  const router = useRouter();
 
-  const form = useForm<FormData>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      roleId: "admin",
-      status: "active",
-    },
+    defaultValues: defaultValues,
   });
 
-  const handleSubmit = async (data: FormData) => {
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
+
+  const handleSubmit = async (data: FormValues) => {
     try {
       setIsSubmitting(true);
       await onSubmit(data);
@@ -59,6 +76,8 @@ export function UserForm({ onSubmit, isLoading = false }: UserFormProps) {
         title: "Success",
         description: "User created successfully",
       });
+
+      router.push('/users');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -121,15 +140,34 @@ export function UserForm({ onSubmit, isLoading = false }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select 
+                onValueChange={field.onChange} 
+                value={field.value}
+                disabled={rolesLoading}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
+                    <SelectValue placeholder="Select a role">
+                      {roles?.find(role => role._id === field.value)?.name || "Select a role"}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
+                  {rolesLoading ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  ) : roles?.length ? (
+                    roles.map((role) => (
+                      <SelectItem key={role._id} value={role._id}>
+                        {role.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="text-sm p-2 text-center text-muted-foreground">
+                      No roles available
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />

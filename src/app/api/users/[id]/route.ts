@@ -61,4 +61,34 @@ export async function PUT(
       { status: 500 }
     );
   }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectToDB();
+    
+    const user = await UserModel.findByIdAndDelete(params.id)
+      .select('-password');
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: 'User deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error('Error deleting user:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete user' },
+      { status: 500 }
+    );
+  }
 } 

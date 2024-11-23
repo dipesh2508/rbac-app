@@ -72,24 +72,26 @@ export function useUsers<T>() {
   const deleteUser = useCallback(async (id: string) => {
     try {
       setLoading(true);
-      const response = await api.delete(`/users/${id}`);
-      setUsers(prev => prev.filter(user => (user as any)._id !== id));
+      const response = await api.delete<{ message: string }>(`/users/${id}`);
+      
+      await fetchUsers();
+      
       toast({
         title: "Success",
         description: response.data.message || "User deleted successfully",
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete user';
+    } catch (error: any) {
+      const message = error.response?.data?.error || error.message || 'Failed to delete user';
       toast({
         variant: "destructive",
         title: "Error",
         description: message,
       });
-      throw err;
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, fetchUsers]);
 
   const getUser = useCallback(async (id: string): Promise<T> => {
     const response = await api.get<{ user: T; message: string }>(`/users/${id}`);

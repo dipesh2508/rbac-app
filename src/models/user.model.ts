@@ -33,8 +33,8 @@ const userSchema = new mongoose.Schema({
     select: false,
   },
   roleId: {
-    type: String,
-    enum: ['admin', 'user'],
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Role',
     required: [true, 'Role is required'],
   },
   status: {
