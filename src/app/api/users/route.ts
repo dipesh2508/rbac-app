@@ -12,8 +12,6 @@ export async function GET() {
       .populate('roleId', 'name')
       .sort({ createdAt: -1 });
     
-    console.log('Users fetched from DB:', users);
-    
     return NextResponse.json(
       { users, message: 'Users fetched successfully' },
       { status: 200 }

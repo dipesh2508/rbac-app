@@ -43,7 +43,7 @@ export default function UsersPage() {
     try {
       setIsDeleting(true);
       await deleteUser(userToDelete);
-      await fetchUsers(); // Refresh the list after deletion
+      await fetchUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
     } finally {
@@ -52,7 +52,6 @@ export default function UsersPage() {
     }
   };
 
-  // Show error state if there's an error
   if (error) {
     return (
       <DashboardLayout>
@@ -73,7 +72,7 @@ export default function UsersPage() {
   return (
     
     <DashboardLayout>
-      <div className="space-y-4">
+      <div className="space-y-4 text-slate-900">
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Users</h2>
           <Button asChild>
