@@ -13,7 +13,6 @@ export interface IRole extends Document {
   permissions: {
     users: Permission;
     roles: Permission;
-    // Add other resource permissions as needed
     settings: Permission;
   };
   createdAt: Date;

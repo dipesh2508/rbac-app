@@ -1,10 +1,16 @@
- 'use client';
+"use client";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LuUsers, LuShieldCheck, LuLayoutDashboard, LuMenu } from "react-icons/lu";
+import {
+  LuUsers,
+  LuShieldCheck,
+  LuLayoutDashboard,
+  LuMenu,
+  LuX,
+} from "react-icons/lu";
 import { useState } from "react";
 
 interface NavItem {
@@ -37,21 +43,31 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 transform bg-white text-gray-900 shadow-soft transition-transform duration-200 ease-in-out lg:translate-x-0",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 transform bg-white text-gray-900 shadow-soft transition-transform duration-200 ease-in-out lg:translate-x-0",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         <div className="flex h-full flex-col">
-          {/* Logo */}
           <div className="flex h-16 items-center border-b px-6">
             <Link href="/" className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-md bg-primary-500" />
-              <span className="text-xl font-semibold text-gray-900">RBAC Admin</span>
+              <span className="text-xl font-semibold text-gray-900">
+                RBAC Admin
+              </span>
             </Link>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-slate-900"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <LuX className="size-12" />
+            </Button>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -67,10 +83,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   asChild
                 >
                   <Link href={item.href}>
-                    <item.icon className={cn(
-                      "h-5 w-5",
-                      isActive ? "text-primary-500" : "text-gray-400"
-                    )} />
+                    <item.icon
+                      className={cn(
+                        "h-5 w-5",
+                        isActive ? "text-primary-500" : "text-gray-400"
+                      )}
+                    />
                     <span className="font-medium">{item.title}</span>
                   </Link>
                 </Button>
@@ -80,33 +98,30 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top bar */}
         <header className="sticky top-0 z-40 flex h-16 items-center bg-white shadow-soft">
           <div className="flex w-full items-center justify-between px-4 lg:px-6">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-slate-900"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <LuMenu className="h-6 w-6" />
+              {isMobileMenuOpen ? (
+                <LuX className="h-6 w-6 text-slate-900" />
+              ) : (
+                <LuMenu className="h-6 w-6 text-slate-900" />
+              )}
             </Button>
-            <div className="ml-4 font-semibold text-gray-900">
-              {navItems.find((item) => item.href === pathname)?.title || "Dashboard"}
-            </div>
-            <div className="flex items-center space-x-4">
-              {/* Add profile dropdown here if needed */}
+            <div className="font-semibold text-gray-900">
+              {navItems.find((item) => item.href === pathname)?.title ||
+                "Dashboard"}
             </div>
           </div>
         </header>
 
-        {/* Page content */}
         <main className="min-h-[calc(100vh-4rem)] bg-gray-50 p-4 lg:p-8">
-          <div className="mx-auto max-w-7xl">
-            {children}
-          </div>
+          <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
     </div>

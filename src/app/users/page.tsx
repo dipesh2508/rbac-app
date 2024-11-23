@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { LuPlus } from 'react-icons/lu';
 
 export interface UserData {
   _id: string;
@@ -79,7 +80,10 @@ export default function UsersPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-3xl font-bold tracking-tight">Users</h2>
           <Button asChild>
-            <Link href="/users/add">Add User</Link>
+            <Link href="/users/add"> 
+              <LuPlus />
+              Add User
+            </Link>
           </Button>
           
         </div>
@@ -99,7 +103,7 @@ export default function UsersPage() {
         )}
 
         <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
-          <DialogContent>
+          <DialogContent className="text-slate-900">
             <DialogHeader>
               <DialogTitle>Delete User</DialogTitle>
               <DialogDescription>
