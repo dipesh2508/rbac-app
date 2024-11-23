@@ -21,7 +21,10 @@ export interface UserData {
   _id: string;
   name: string;
   email: string;
-  roleId: 'admin' | 'user';
+  roleId: {
+    _id: string;
+    name: string;
+  };
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDB } from '@/lib/db';
 import { UserModel } from '@/models/user.model';
+import RoleModel from '@/models/role.model';
 import { hash } from 'bcryptjs';
 
 export async function GET() {
@@ -9,7 +10,12 @@ export async function GET() {
     console.log('DB Connection successful');
     
     const users = await UserModel.find({})
-      .populate('roleId', 'name')
+      .populate({
+        path: 'roleId',
+        model: RoleModel,
+        select: 'name'
+      })
+      .select('-password')
       .sort({ createdAt: -1 });
     
     return NextResponse.json(

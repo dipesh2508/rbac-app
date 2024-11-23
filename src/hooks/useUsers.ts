@@ -91,6 +91,16 @@ export function useUsers<T>() {
     }
   }, [toast]);
 
+  const getUser = useCallback(async (id: string): Promise<T> => {
+    const response = await api.get<{ user: T; message: string }>(`/users/${id}`);
+    return response.data.user;
+  }, []);
+
+  const updateUser = useCallback(async (id: string, userData: Partial<T>) => {
+    const response = await api.put<{ user: T; message: string }>(`/users/${id}`, userData);
+    return response.data;
+  }, []);
+
   return {
     users,
     loading,
@@ -98,5 +108,7 @@ export function useUsers<T>() {
     fetchUsers,
     createUser,
     deleteUser,
+    getUser,
+    updateUser,
   };
 } 
