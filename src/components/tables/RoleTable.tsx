@@ -17,7 +17,7 @@ interface RoleTableProps {
 
 export function RoleTable({ roles, onEdit, onDelete }: RoleTableProps) {
   return (
-    <Table>
+    <Table className="bg-white">
       <TableHeader>
         <TableRow>
           <TableHead>Role Name</TableHead>

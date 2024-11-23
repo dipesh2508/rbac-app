@@ -20,7 +20,7 @@ interface UserTableProps {
 
 export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
   return (
-    <Table>
+    <Table className="bg-white shadow-md">
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
